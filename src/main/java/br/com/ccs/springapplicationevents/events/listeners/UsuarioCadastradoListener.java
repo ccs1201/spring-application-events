@@ -2,18 +2,18 @@ package br.com.ccs.springapplicationevents.events.listeners;
 
 import br.com.ccs.springapplicationevents.events.UsuarioCadastradoEvent;
 import br.com.ccs.springapplicationevents.services.EmailService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UsuarioCadastradoListener implements ApplicationListener<UsuarioCadastradoEvent> {
+@RequiredArgsConstructor
+public class UsuarioCadastradoListener {
 
-    @Autowired
-    private EmailService emailService;
+    private final EmailService emailService;
 
-    @Override
-    public void onApplicationEvent(UsuarioCadastradoEvent event) {
-        emailService.enfileirarEmailParaEnvio(event.getUsuario());
+    @EventListener
+    public void onUsuarioAcadastradoEvent(UsuarioCadastradoEvent event) {
+        emailService.adcionarAosEmailsParaEnvio(event.getUsuario());
     }
 }

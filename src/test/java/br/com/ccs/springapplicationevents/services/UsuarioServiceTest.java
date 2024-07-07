@@ -1,11 +1,14 @@
 package br.com.ccs.springapplicationevents.services;
 
 import br.com.ccs.springapplicationevents.entities.Usuario;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SpringBootTest
 class UsuarioServiceTest {
@@ -13,24 +16,42 @@ class UsuarioServiceTest {
     private static final int QTD_USUARIOS = 10;
     @Autowired
     private UsuarioService service;
-    @Autowired
-    private EmailService emailService;
-    private final String email = "john{%d}@doe.com";
-
-    @AfterAll
-    static void tearDown() throws InterruptedException {
-        Thread.sleep(0);
-    }
+    private static final String email = "%s-%d@doe.com";
+    private static final String nome = "Future:{%s}{%d}";
+    private final AtomicInteger qtdUsuariosGerados = new AtomicInteger(0);
 
     @Test
-    void save() {
+    void save() throws InterruptedException {
+        var futures = new CompletableFuture[8];
+        futures[0] = CompletableFuture.runAsync(() -> cadastrarUsuarios(0), Executors.newVirtualThreadPerTaskExecutor());
+        futures[1] = CompletableFuture.runAsync(() -> cadastrarUsuarios(1), Executors.newVirtualThreadPerTaskExecutor());
+        futures[2] = CompletableFuture.runAsync(() -> cadastrarUsuarios(2), Executors.newVirtualThreadPerTaskExecutor());
+        futures[3] = CompletableFuture.runAsync(() -> cadastrarUsuarios(3), Executors.newVirtualThreadPerTaskExecutor());
+        futures[4] = CompletableFuture.runAsync(() -> cadastrarUsuarios(4), Executors.newVirtualThreadPerTaskExecutor());
+        futures[5] = CompletableFuture.runAsync(() -> cadastrarUsuarios(5), Executors.newVirtualThreadPerTaskExecutor());
+        futures[6] = CompletableFuture.runAsync(() -> cadastrarUsuarios(6), Executors.newVirtualThreadPerTaskExecutor());
+        futures[7] = CompletableFuture.runAsync(() -> cadastrarUsuarios(7), Executors.newVirtualThreadPerTaskExecutor());
+
+        CompletableFuture.allOf(futures).join();
+
+        /*
+        Se não dermos uma pequena pausa no teste, nenhum email sera logado como enviado,
+        pois temos um scheduler de 200ms no emailService para envio, e o teste termina
+        antes mesmo de qualquer email ser enviado.
+         */
+        Thread.sleep(1000);
+
+        Assertions.assertEquals(QTD_USUARIOS * futures.length, EmailService.getQtdEmailsEnviados());
+    }
+
+    private void cadastrarUsuarios(int futureNumero) {
         for (int i = 0; i < QTD_USUARIOS; i++) {
             var usuario = Usuario.builder()
-                    .nome("john")
-                    .email(String.format(email, i))
+                    .nome(String.format(nome, futureNumero, i))
+                    .email(String.format(email, "Future:" + futureNumero, i))
                     .build();
-            var usuarioSalvo = service.save(usuario);
+            service.save(usuario);
+            qtdUsuariosGerados.incrementAndGet();
         }
-        Assertions.assertEquals(QTD_USUARIOS, emailService.getQtdUsuarios());
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.context.ApplicationEvent;
 @Getter
 public class UsuarioCadastradoEvent extends ApplicationEvent {
 
-    private Usuario usuario;
+    private final Usuario usuario;
 
     public UsuarioCadastradoEvent(Object source, Usuario usuario) {
         super(source);
