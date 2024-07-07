@@ -23,7 +23,7 @@ class UsuarioServiceTest {
     private final AtomicInteger qtdUsuariosGerados = new AtomicInteger(0);
 
     @Test
-    void save() throws InterruptedException {
+    void save() {
         var futures = new CompletableFuture[8];
         futures[0] = CompletableFuture.runAsync(() -> cadastrarUsuarios(0), Executors.newVirtualThreadPerTaskExecutor());
         futures[1] = CompletableFuture.runAsync(() -> cadastrarUsuarios(1), Executors.newVirtualThreadPerTaskExecutor());
