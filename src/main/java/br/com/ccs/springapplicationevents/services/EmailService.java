@@ -7,6 +7,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
@@ -15,11 +17,11 @@ public class EmailService {
 
     private final List<Usuario> usuarios = new CopyOnWriteArrayList<>();
     @Getter
-    private static int qtdEmailsEnviados = 0;
+    private static final Set<Usuario> emailEnviados = ConcurrentHashMap.newKeySet();
 
     private void enviarEmail(Usuario usuario) {
         log.info("Enviando e-mail para {} - {}", usuario.getNome(), usuario.getEmail());
-        qtdEmailsEnviados++;
+        emailEnviados.add(usuario);
     }
 
     public void adcionarAosEmailsParaEnvio(Usuario usuario) {
@@ -27,11 +29,11 @@ public class EmailService {
         usuarios.add(usuario);
     }
 
-
     @Scheduled(fixedDelay = 200)
     void send() {
-        usuarios.forEach(this::enviarEmail);
-        usuarios.clear();
+        usuarios.forEach(u -> {
+            enviarEmail(u);
+            usuarios.remove(u);
+        });
     }
-
 }

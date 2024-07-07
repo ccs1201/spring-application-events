@@ -23,7 +23,7 @@ class UsuarioServiceTest {
     private final AtomicInteger qtdUsuariosGerados = new AtomicInteger(0);
 
     @Test
-    void save() {
+    void save() throws InterruptedException {
         var futures = new CompletableFuture[8];
         futures[0] = CompletableFuture.runAsync(() -> cadastrarUsuarios(0), Executors.newVirtualThreadPerTaskExecutor());
         futures[1] = CompletableFuture.runAsync(() -> cadastrarUsuarios(1), Executors.newVirtualThreadPerTaskExecutor());
@@ -35,8 +35,13 @@ class UsuarioServiceTest {
         futures[7] = CompletableFuture.runAsync(() -> cadastrarUsuarios(7), Executors.newVirtualThreadPerTaskExecutor());
 
         assertDoesNotThrow(() -> CompletableFuture.allOf(futures).join());
+        /*
+        Temos que dar uma pausa para que o scheduler do EmailService
+        posso processar o envio de todos os emails da lista
+         */
+        Thread.sleep(400);
 
-        assertEquals(QTD_USUARIOS * futures.length, EmailService.getQtdEmailsEnviados());
+        assertEquals(QTD_USUARIOS * futures.length, EmailService.getEmailEnviados().size());
     }
 
     private void cadastrarUsuarios(int futureNumero) {
@@ -48,11 +53,10 @@ class UsuarioServiceTest {
             service.save(usuario);
             qtdUsuariosGerados.incrementAndGet();
             try {
-                Thread.sleep(300);
+                Thread.sleep(100);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 }
