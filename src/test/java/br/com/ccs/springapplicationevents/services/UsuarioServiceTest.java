@@ -1,7 +1,6 @@
 package br.com.ccs.springapplicationevents.services;
 
 import br.com.ccs.springapplicationevents.entities.Usuario;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,6 +8,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 class UsuarioServiceTest {
@@ -32,7 +34,7 @@ class UsuarioServiceTest {
         futures[6] = CompletableFuture.runAsync(() -> cadastrarUsuarios(6), Executors.newVirtualThreadPerTaskExecutor());
         futures[7] = CompletableFuture.runAsync(() -> cadastrarUsuarios(7), Executors.newVirtualThreadPerTaskExecutor());
 
-        CompletableFuture.allOf(futures).join();
+        assertDoesNotThrow(() -> CompletableFuture.allOf(futures).join());
 
         /*
         Se não dermos uma pequena pausa no teste, nenhum email sera logado como enviado,
@@ -41,7 +43,7 @@ class UsuarioServiceTest {
          */
         Thread.sleep(1000);
 
-        Assertions.assertEquals(QTD_USUARIOS * futures.length, EmailService.getQtdEmailsEnviados());
+        assertEquals(QTD_USUARIOS * futures.length, EmailService.getQtdEmailsEnviados());
     }
 
     private void cadastrarUsuarios(int futureNumero) {
@@ -52,6 +54,12 @@ class UsuarioServiceTest {
                     .build();
             service.save(usuario);
             qtdUsuariosGerados.incrementAndGet();
+            try {
+                Thread.sleep(300);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
     }
 }
