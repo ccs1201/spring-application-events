@@ -36,13 +36,6 @@ class UsuarioServiceTest {
 
         assertDoesNotThrow(() -> CompletableFuture.allOf(futures).join());
 
-        /*
-        Se não dermos uma pequena pausa no teste, nenhum email sera logado como enviado,
-        pois temos um scheduler de 200ms no emailService para envio, e o teste termina
-        antes mesmo de qualquer email ser enviado.
-         */
-        Thread.sleep(1000);
-
         assertEquals(QTD_USUARIOS * futures.length, EmailService.getQtdEmailsEnviados());
     }
 
